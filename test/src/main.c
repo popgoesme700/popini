@@ -35,6 +35,9 @@ int main(int argCount,char *args[]){
 	while(strncmp(ans,"q",1)!=0 && strncmp(ans,"quit",4)!=0){
 		printf("Enter an action (enter ? or help for a list of actions you can do): ");
 		int nocare= scanf("%s",ans);
+		if(strncmp(ans,"q",1)==0 || strncmp(ans,"quit",4)==0){
+			break;
+		}
 		if(strncmp(ans,"?",1)==0 || strncmp(ans,"help",4)==0){
 			printf("Actions you can do:\n");
 			printf("q or quit: Closes the program.\n");
@@ -341,6 +344,7 @@ int main(int argCount,char *args[]){
 				printf("No newline comments exists in this infile!\n\n");
 			}
 		}
+		ans[0]= '\0';
 	}
 
 	/* Frees up the memory used by the INIFILE structure. */
