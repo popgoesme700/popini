@@ -57,12 +57,14 @@ The actions when you have a key or section selected are self explainitory. Each 
 Now that you understand the demonstrative executable program of the library's features, why dont we explain the library's functions?
 ### Library
 First, before we mess with sections, keys, comments, and values, we need to create and/or read an inifile. This is very simple, and has two functions that do different stuff.
-The function ```c
+The function
+```c
 POPINI_ST_INIFILE *POPINI_FU_PARSE_INIFILE(const char *file);
 ```
 Will create an inifile structure, return its pointer, and read the file passed if it exists (and apply all of the data in it to the structure).
 
-The function ```c
+The function
+```c
 POPINI_ST_INIFILE *POPINI_FU_NEW_INIFILE(const char *file);
 ```
 Will create an inifile structure and return its pointer. It wont read the file passed if it exists, the file string passed is used to specify what file `POPINI_FU_WRITE_INIFILE` will write to.
