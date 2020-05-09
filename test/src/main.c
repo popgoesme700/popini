@@ -111,6 +111,23 @@ int main(int argCount,char *args[]){
 			sec= NULL;
 			key= NULL;
 			printf("Section deleted and unselected!\n");
+		}else if(sec!=NULL && (strncmp(ans,"ssc",3)==0 || strncmp(ans,"setsectioncomment",17)==0)){
+			printf("Do you want to unset the comment? [Y/N] ");
+			nocare= scanf("%s",ans);
+			if(strncmp(ans,"y",1)==0 || strncmp(ans,"Y",1)==0){
+				POPINI_FU_UNSET_SECTION_COMMENT(sec);
+			}else{
+				printf("Enter comment string: ");
+				while(fgets(ans,100,stdin)){
+					if(strcspn(ans,"\n")>=1){
+						ans[strcspn(ans,"\n")]= '\0';
+						break;
+					}
+				}
+				POPINI_ST_COMMENT *comm= POPINI_FU_SET_SECTION_COMMENT(sec,ans);
+				comm->dilema= ';';
+			}
+			printf("Successfully did action\n\n");
 		}else if(ini!=NULL && (strncmp(ans,"ss",2)==0 || strncmp(ans,"selectsection",13)==0)){
 			printf("Do you want to select the section by name? [Y/N] ");
 			nocare= scanf("%s",ans);
@@ -289,23 +306,6 @@ int main(int argCount,char *args[]){
 					printf("There are no sectioned keys inside of the selected section...\n\n");
 				}
 			}
-		}else if(sec!=NULL && (strncmp(ans,"ssc",3)==0 || strncmp(ans,"setsectioncomment",17)==0)){
-			printf("Do you want to unset the comment? [Y/N] ");
-			nocare= scanf("%s",ans);
-			if(strncmp(ans,"y",1)==0 || strncmp(ans,"Y",1)==0){
-				POPINI_FU_UNSET_SECTION_COMMENT(sec);
-			}else{
-				printf("Enter comment string: ");
-				while(fgets(ans,100,stdin)){
-					if(strcspn(ans,"\n")>=1){
-						ans[strcspn(ans,"\n")]= '\0';
-						break;
-					}
-				}
-				POPINI_ST_COMMENT *comm= POPINI_FU_SET_SECTION_COMMENT(sec,ans);
-				comm->dilema= ';';
-			}
-			printf("Successfully did action\n\n");
 		}else if(ini!=NULL && (strncmp(ans,"anc",3)==0 || strncmp(ans,"addnewlinecomment",17)==0)){
 			printf("Enter the comment string: ");
 			while(fgets(ans,100,stdin)){
