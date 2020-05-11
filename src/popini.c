@@ -606,6 +606,7 @@ static void remove_value(POPINI_ST_KEY *key,long unsigned pos){
 		if(key->valLen>0){
 			key->values= (char**)realloc(key->values,key->valLen*sizeof(*key->values));
 		}else if(key->values[key->valLen]==NULL){
+			free(key->values);
 			key->values= NULL;
 		}else{
 			key->values= (char**)realloc(key->values,sizeof(*key->values));
@@ -637,6 +638,7 @@ static void remove_sectioned_key(POPINI_ST_SECTION *sec,long unsigned pos){
 		if(sec->keyLen>0){
 			sec->keys= (POPINI_ST_KEY**)realloc(sec->keys,sec->keyLen*sizeof(**sec->keys));
 		}else if(sec->keys[sec->keyLen]==NULL){
+			free(sec->keys);
 			sec->keys= NULL;
 		}else{
 			sec->keys= (POPINI_ST_KEY**)realloc(sec->keys,sizeof(**sec->keys));
@@ -668,6 +670,7 @@ static void remove_unsectioned_key(POPINI_ST_INIFILE *ini,long unsigned pos){
 		if(ini->keyLen>0){
 			ini->keys= (POPINI_ST_KEY**)realloc(ini->keys,ini->keyLen*sizeof(**ini->keys));
 		}else if(ini->keys[ini->keyLen]==NULL){
+			free(ini->keys);
 			ini->keys= NULL;
 		}else{
 			ini->keys= (POPINI_ST_KEY**)realloc(ini->keys,sizeof(**ini->keys));
@@ -700,6 +703,7 @@ static void remove_newline_comment(POPINI_ST_INIFILE *ini,long unsigned pos){
 		if(ini->comLen>0){
 			ini->comments= (POPINI_ST_COMMENT**)realloc(ini->comments,ini->comLen*sizeof(**ini->comments));
 		}else if(ini->comments[ini->comLen]==NULL){
+			free(ini->comments);
 			ini->comments= NULL;
 		}else{
 			ini->comments= (POPINI_ST_COMMENT**)realloc(ini->comments,ini->comLen*sizeof(**ini->comments));
@@ -731,6 +735,7 @@ static void remove_section(POPINI_ST_INIFILE *ini,long unsigned pos){
 		if(ini->secLen>0){
 			ini->sections= (POPINI_ST_SECTION**)realloc(ini->sections,ini->secLen*sizeof(**ini->sections));
 		}else if(ini->sections[ini->secLen]==NULL){
+			free(ini->sections);
 			ini->sections= NULL;
 		}else{
 			ini->sections= (POPINI_ST_SECTION**)realloc(ini->sections,sizeof(**ini->sections));
