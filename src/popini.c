@@ -591,7 +591,8 @@ static void remove_value(POPINI_ST_KEY *key,long unsigned pos){
 	}
 	if(key->values!=NULL){
 		if(pos>=key->valLen){
-			free(key->values[pos]);
+			free(key->values[key->valLen]);
+			key->values[key->valLen]= NULL;
 			key->valLen--;
 		}else{
 			long unsigned nPos;
@@ -602,7 +603,13 @@ static void remove_value(POPINI_ST_KEY *key,long unsigned pos){
 			}
 			key->valLen--;
 		}
-		key->values= (char**)realloc(key->values,key->valLen*sizeof(*key->values));
+		if(key->valLen>0){
+			key->values= (char**)realloc(key->values,key->valLen*sizeof(*key->values));
+		}else if(key->values[key->valLen]==NULL){
+			key->values= NULL;
+		}else{
+			key->values= (char**)realloc(key->values,sizeof(*key->values));
+		}
 	}
 }
 
@@ -613,7 +620,9 @@ static void remove_sectioned_key(POPINI_ST_SECTION *sec,long unsigned pos){
 	}
 	if(sec->keys!=NULL){
 		if(pos>=sec->keyLen){
+			free_key(sec->keys[sec->keyLen]);
 			free(sec->keys[sec->keyLen]);
+			sec->keys[sec->keyLen]= NULL;
 			sec->keyLen--;
 		}else{
 			long unsigned nPos;
@@ -625,7 +634,13 @@ static void remove_sectioned_key(POPINI_ST_SECTION *sec,long unsigned pos){
 			}
 			sec->keyLen--;
 		}
-		sec->keys= (POPINI_ST_KEY**)realloc(sec->keys,sec->keyLen*sizeof(**sec->keys));
+		if(sec->keyLen>0){
+			sec->keys= (POPINI_ST_KEY**)realloc(sec->keys,sec->keyLen*sizeof(**sec->keys));
+		}else if(sec->keys[sec->keyLen]==NULL){
+			sec->keys= NULL;
+		}else{
+			sec->keys= (POPINI_ST_KEY**)realloc(sec->keys,sizeof(**sec->keys));
+		}
 	}
 }
 
@@ -636,19 +651,27 @@ static void remove_unsectioned_key(POPINI_ST_INIFILE *ini,long unsigned pos){
 	}
 	if(ini->keys!=NULL){
 		if(pos>=ini->keyLen){
+			free_key(ini->keys[ini->keyLen]);
 			free(ini->keys[ini->keyLen]);
+			ini->keys[ini->keyLen]= NULL;
 			ini->keyLen--;
 		}else{
 			long unsigned nPos;
 			free_key(ini->keys[pos]);
 			free(ini->keys[pos]);
 			ini->keys[pos]= NULL;
+			ini->keyLen--;
 			for(nPos=pos;nPos<=ini->keyLen;nPos++){
 				ini->keys[nPos]= ini->keys[nPos+1];
 			}
-			ini->keyLen--;
 		}
-		ini->keys= (POPINI_ST_KEY**)realloc(ini->keys,ini->keyLen*sizeof(**ini->keys));
+		if(ini->keyLen>0){
+			ini->keys= (POPINI_ST_KEY**)realloc(ini->keys,ini->keyLen*sizeof(**ini->keys));
+		}else if(ini->keys[ini->keyLen]==NULL){
+			ini->keys= NULL;
+		}else{
+			ini->keys= (POPINI_ST_KEY**)realloc(ini->keys,sizeof(**ini->keys));
+		}
 	}
 }
 
@@ -661,6 +684,7 @@ static void remove_newline_comment(POPINI_ST_INIFILE *ini,long unsigned pos){
 		if(pos>=ini->comLen){
 			free_comment(ini->comments[ini->comLen]);
 			free(ini->comments[ini->comLen]);
+			ini->comments[ini->comLen]= NULL;
 			ini->comLen--;
 		}else{
 			long unsigned nPos;
@@ -673,7 +697,13 @@ static void remove_newline_comment(POPINI_ST_INIFILE *ini,long unsigned pos){
 			}
 			ini->comLen--;
 		}
-		ini->comments= (POPINI_ST_COMMENT**)realloc(ini->comments,ini->comLen*sizeof(**ini->comments));
+		if(ini->comLen>0){
+			ini->comments= (POPINI_ST_COMMENT**)realloc(ini->comments,ini->comLen*sizeof(**ini->comments));
+		}else if(ini->comments[ini->comLen]==NULL){
+			ini->comments= NULL;
+		}else{
+			ini->comments= (POPINI_ST_COMMENT**)realloc(ini->comments,ini->comLen*sizeof(**ini->comments));
+		}
 	}
 }
 
@@ -685,6 +715,7 @@ static void remove_section(POPINI_ST_INIFILE *ini,long unsigned pos){
 		if(pos>=ini->secLen){
 			free_section(ini->sections[ini->secLen]);
 			free(ini->sections[ini->secLen]);
+			ini->sections[ini->secLen]= NULL;
 			ini->secLen--;
 		}else{
 			long unsigned nPos;
@@ -697,7 +728,13 @@ static void remove_section(POPINI_ST_INIFILE *ini,long unsigned pos){
 			}
 			ini->secLen--;
 		}
-		ini->sections= (POPINI_ST_SECTION**)realloc(ini->sections,ini->secLen*sizeof(**ini->sections));
+		if(ini->secLen>0){
+			ini->sections= (POPINI_ST_SECTION**)realloc(ini->sections,ini->secLen*sizeof(**ini->sections));
+		}else if(ini->sections[ini->secLen]==NULL){
+			ini->sections= NULL;
+		}else{
+			ini->sections= (POPINI_ST_SECTION**)realloc(ini->sections,sizeof(**ini->sections));
+		}
 	}
 }
 
