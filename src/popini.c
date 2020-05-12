@@ -816,7 +816,6 @@ POPINI_ST_INIFILE *POPINI_FU_PARSE_INIFILE(const char *file){
 				}else{
 					/* Assume, because the first character isnt a comment dilema character and an opening bracket character, that it is a key. */
 					/* Values are defined with an =, so keys cant have =s. */
-					printf("%d\n",*ptr);
 					char *valPtr= char_in_string(ptr,'=');
 					if(valPtr==NULL){
 						free_ini_file(ini);
