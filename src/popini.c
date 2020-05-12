@@ -155,14 +155,6 @@ static char *skip_whitespaces(char *str){
 	return str;
 }
 
-/* Duplicates a string */
-static char *dup_string(const char *str){
-	long unsigned size= strlen(str)+1;
-	char *nStr= (char*)calloc(size,sizeof(*nStr));
-	nStr= memcpy(nStr,str,size);
-	return nStr;
-}
-
 /* Like char_in_string_end, but you also pass an array of chars to check against instead of one character. */
 static char *char_in_string_end_list(char *str,char *list){
 	char *originptr= str;
@@ -222,7 +214,7 @@ static void string_remove_current_char(char *str){
 /* Adds character to string, shifting all characters after it to the right one. Dont forget to realloc the string before calling this! This wont realloc the string for you! */
 static void string_add_char(char *str,char chr){
 	char *originptr= str;
-	str= &str[strlen(str)];
+	str= &(str[strlen(str)]);
 	while(str!=originptr){
 		*str= *(str-1);
 		str--;
@@ -256,19 +248,20 @@ static char *char_in_string_not_escaped(char *str,char chr){
 /* Like char_in_string, but adds escaping backslash before character. */
 static char *char_in_string_escape(char *str,char chr){
 	long unsigned size= strlen(str)+1;
-	char *allo= (char*)calloc(size,sizeof(*allo));
-	allo= memcpy(allo,str,size);
-	while(*str!='\0'){
-		if(*str==chr){
+	char *startPtr= (char*)calloc(size,sizeof(*startPtr));
+	startPtr= memcpy(startPtr,str,size);
+	long unsigned pos= 0;
+	while(startPtr[pos]!='\0'){
+		if(startPtr[pos]==chr){
 			size++;
-			allo= (char*)realloc(allo,size*sizeof(*allo));
-			allo--;
-			string_add_char(allo,'\\');
-			allo++;
+			startPtr= (char*)realloc(startPtr,size*sizeof(*startPtr));
+			startPtr[size]= '\0';
+			string_add_char(&(startPtr[pos]),'\\');
+			pos++;
 		}
-		str++;
+		pos++;
 	}
-	return allo;
+	return startPtr;
 }
 
 /* Frees memory used by a COMMENT structure */
