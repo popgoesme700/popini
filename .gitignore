@@ -53,3 +53,5 @@ dkms.conf
 test/build/
 cmakeflags
 build/
+build.sh
+builds
