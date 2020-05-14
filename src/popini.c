@@ -286,7 +286,6 @@ static void free_key(POPINI_ST_KEY *key){
 	}
 	if(key->comment!=NULL){
 		free_comment(key->comment);
-		free(key->comment);
 	}
 	key->comment= NULL;
 	key->values= NULL;
@@ -301,14 +300,12 @@ static void free_section(POPINI_ST_SECTION *section){
 		for(i=0;i<=section->keyLen;i++){
 			if(section->keys[i]!=NULL){
 				free_key(section->keys[i]);
-				free(section->keys[i]);
 			}
 		}
 		free(section->keys);
 	}
 	if(section->comment!=NULL){
 		free_comment(section->comment);
-		free(section->comment);
 	}
 	section->comment= NULL;
 	section->keys= NULL;
@@ -323,7 +320,6 @@ static void free_ini_file(POPINI_ST_INIFILE *ini){
 		for(i=0;i<=ini->secLen;i++){
 			if(ini->sections[i]!=NULL){
 				free_section(ini->sections[i]);
-				free(ini->sections[i]);
 			}
 		}
 		free(ini->sections);
@@ -335,7 +331,6 @@ static void free_ini_file(POPINI_ST_INIFILE *ini){
 		for(i=0;i<=ini->comLen;i++){
 			if(ini->comments[i]!=NULL){
 				free_comment(ini->comments[i]);
-				free(ini->comments[i]);
 			}
 		}
 		free(ini->comments);
@@ -561,9 +556,7 @@ static void add_inifile_comment(POPINI_ST_INIFILE *ini,POPINI_ST_COMMENT *com,lo
 static void set_section_comment(POPINI_ST_SECTION *section,POPINI_ST_COMMENT *com){
 	if(section->comment!=NULL){
 		free_comment(section->comment);
-		free(section->comment);
 	}
-	section->comment= (POPINI_ST_COMMENT*)calloc(1,sizeof(*section->comment));
 	section->comment= com;
 }
 
@@ -571,9 +564,7 @@ static void set_section_comment(POPINI_ST_SECTION *section,POPINI_ST_COMMENT *co
 static void set_key_comment(POPINI_ST_KEY *key,POPINI_ST_COMMENT *com){
 	if(key->comment!=NULL){
 		free_comment(key->comment);
-		free(key->comment);
 	}
-	key->comment= (POPINI_ST_COMMENT*)calloc(1,sizeof(*key->comment));
 	key->comment= com;
 }
 
@@ -615,7 +606,6 @@ static void remove_sectioned_key(POPINI_ST_SECTION *sec,long unsigned pos){
 	if(sec->keys!=NULL){
 		if(pos>=sec->keyLen){
 			free_key(sec->keys[sec->keyLen]);
-			free(sec->keys[sec->keyLen]);
 			sec->keys[sec->keyLen]= NULL;
 			if(sec->keyLen>0){
 				sec->keyLen--;
@@ -623,7 +613,6 @@ static void remove_sectioned_key(POPINI_ST_SECTION *sec,long unsigned pos){
 		}else{
 			long unsigned nPos;
 			free_key(sec->keys[pos]);
-			free(sec->keys[pos]);
 			sec->keys[pos]= NULL;
 			for(nPos=pos;nPos<=sec->keyLen;nPos++){
 				sec->keys[nPos]= sec->keys[nPos+1];
@@ -647,7 +636,6 @@ static void remove_unsectioned_key(POPINI_ST_INIFILE *ini,long unsigned pos){
 	if(ini->keys!=NULL){
 		if(pos>=ini->keyLen){
 			free_key(ini->keys[ini->keyLen]);
-			free(ini->keys[ini->keyLen]);
 			ini->keys[ini->keyLen]= NULL;
 			if(ini->keyLen>0){
 				ini->keyLen--;
@@ -655,7 +643,6 @@ static void remove_unsectioned_key(POPINI_ST_INIFILE *ini,long unsigned pos){
 		}else{
 			long unsigned nPos;
 			free_key(ini->keys[pos]);
-			free(ini->keys[pos]);
 			ini->keys[pos]= NULL;
 			ini->keyLen--;
 			for(nPos=pos;nPos<=ini->keyLen;nPos++){
@@ -679,7 +666,6 @@ static void remove_newline_comment(POPINI_ST_INIFILE *ini,long unsigned pos){
 	if(ini->comments!=NULL){
 		if(pos>=ini->comLen){
 			free_comment(ini->comments[ini->comLen]);
-			free(ini->comments[ini->comLen]);
 			ini->comments[ini->comLen]= NULL;
 			if(ini->comLen>0){
 				ini->comLen--;
@@ -688,7 +674,6 @@ static void remove_newline_comment(POPINI_ST_INIFILE *ini,long unsigned pos){
 			long unsigned nPos;
 
 			free_comment(ini->comments[pos]);
-			free(ini->comments[pos]);
 			ini->comments[pos]= NULL;
 			for(nPos=pos;nPos<=ini->comLen;nPos++){
 				ini->comments[nPos]= ini->comments[nPos+1];
@@ -711,7 +696,6 @@ static void remove_section(POPINI_ST_INIFILE *ini,long unsigned pos){
 	if(ini->sections!=NULL){
 		if(pos>=ini->secLen){
 			free_section(ini->sections[ini->secLen]);
-			free(ini->sections[ini->secLen]);
 			ini->sections[ini->secLen]= NULL;
 			if(ini->secLen>0){
 				ini->secLen--;
@@ -720,7 +704,6 @@ static void remove_section(POPINI_ST_INIFILE *ini,long unsigned pos){
 			long unsigned nPos;
 
 			free_section(ini->sections[pos]);
-			free(ini->sections[pos]);
 			ini->sections[pos]= NULL;
 			for(nPos=pos;nPos<=ini->secLen;nPos++){
 				ini->sections[nPos]= ini->sections[nPos+1];
