@@ -388,7 +388,7 @@ static POPINI_ST_COMMENT *new_comment(const char *str){
 	long unsigned size= strlen(str)+1;
 	comment->str= (char*)calloc(size,sizeof(*comment->str));
 	comment->str= memcpy(comment->str,str,size);
-	comment->dilema= '\0';
+	comment->dilema= *H_FILE_POPINI_DILEMACHARS;
 	comment->line= 0;
 
 	return comment;
