@@ -21,4 +21,8 @@ typedef char (*PopIniSigFunc)(const PopIniSig signal,const long unsigned line,co
 /* Allows setting of a signal's function callback. */
 void PopIniSig_OnSignal(PopIniSig signal,PopIniSigFunc func);
 
+/* Testing purposes only */
+void readLine(const char *str);
+void readFLine(FILE *file);
+
 #endif
