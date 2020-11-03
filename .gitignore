@@ -3,6 +3,7 @@
 compile_commands.json
 .compilationjsons
 .cache/
+.clangd/
 
 # Block test unit build directory
 test/build/
