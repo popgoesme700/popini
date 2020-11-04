@@ -19,7 +19,7 @@ static char *substr(const char *str,const unsigned start,const unsigned end){
 }
 
 int main(int argc,const char *argv[]){
-	const char ini[]= "[Test]\nKey=Value\nKey= Value\nKey =Value\nKey = Value\n Key= Value Value\nKey= Value ;Value\nKey= \"String Test ;Wow\"\nKey= 'String Test ;Wow'\nKey= 'String Test ;Wow' ;Wow\n[Test 2]\n#Key = Test me!\n# Key = Test me!\n;Key = Test me!\n; Key = Test me!";
+	const char ini[]= "[Test]\n\tKey = {This should not fail {This is a new table!}}\n";
 
 	poplibs_popiniparser parser;
 	poplibs_popinitoken_t tokens[64];
@@ -28,5 +28,21 @@ int main(int argc,const char *argv[]){
 
 	poplibs_popiniparser_init(&parser);
 	madeTokens= poplibs_popiniparser_parse(&parser,ini,strlen(ini),tokens,64);
+	printf("Made %u tokens, Errorcode %d\n",madeTokens,parser.err);
+	if(parser.err==0){
+		unsigned i;
+		for(i=0;i<madeTokens;i++){
+			poplibs_popinitoken_t *token= &tokens[i];
+			char *sub;
+			printf("Token of type: %d\n",token->type);
+			if(token->type==poplibs_popinitype_table){
+				printf("-> Tokens upto %u are values of this table\n",token->end);
+			}else{
+				sub= substr(ini,token->start,token->end);
+				printf("-> String (%s)\n",sub);
+				free(sub);
+			}
+		}
+	}
 	return 0;
 }
