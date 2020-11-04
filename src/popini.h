@@ -1,3 +1,551 @@
+#ifndef POPLIBS_POPINI_H_FILE
+#	define POPLIBS_POPINI_H_FILE
+
+#	ifdef POPLIBS_POPINI_STATIC
+#		define POPLIBS_POPINIAPI static
+#	else
+#		define POPLIBS_POPINIAPI extern
+#	endif
+
+#	ifndef NULL
+#		define NULL (void*)0
+#	endif
+
+enum poplibs_popinierror{
+	poplibs_popinierror_none= 0,
+	poplibs_popinierror_inval= -1,
+	poplibs_popinierror_missi= -2,
+	poplibs_popinierror_nomem= -3,
+	poplibs_popinierror_part= -4
+};
+
+enum poplibs_popinitype{
+	poplibs_popinitype_unknown= 0,
+	poplibs_popinitype_section= 1,
+	poplibs_popinitype_key= 2,
+	poplibs_popinitype_string= 3,
+	poplibs_popinitype_primi= 4,
+	poplibs_popinitype_table= 5
+};
+
+typedef struct poplibs_popini_parser{
+	enum poplibs_popinierror err;
+	unsigned pos;
+	unsigned errPos;
+	unsigned nexttok;
+	char errSym;
+} poplibs_popiniparser;
+
+typedef struct poplibs_popinitoken{
+	enum poplibs_popinitype type;
+	unsigned end;
+	unsigned start;
+} poplibs_popinitoken_t;
+
+POPLIBS_POPINIAPI void poplibs_popiniparser_init(poplibs_popiniparser *parser);
+POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *parser,const char *str,const unsigned strlen,poplibs_popinitoken_t *tokens,const unsigned tokenlen);
+
+#	ifndef POPLIBS_POPINICOMPILED
+
+static poplibs_popinitoken_t *popini_alloctoken(poplibs_popiniparser *parser,poplibs_popinitoken_t *tokens,const unsigned tokenlen){
+	poplibs_popinitoken_t *token= NULL;
+	if(parser->nexttok<tokenlen){
+		token= &tokens[parser->nexttok++];
+		token->type= poplibs_popinitype_unknown;
+		token->start= 0;
+		token->end= 0;
+	}
+	return token;
+}
+
+static char popini_skipspace(poplibs_popiniparser *parser,const char *str,const unsigned strlen){
+	char chr= '\0';
+	int leav= 0;
+
+	for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+		switch(chr){
+			case ' ':
+			case '\t':
+			case '\v':
+			case '\f':
+			case '\r':
+				break;
+			default:
+				leav= 1;
+				break;
+		}
+		if(leav){
+			break;
+		}
+	}
+	return chr;
+}
+
+static void popini_value(poplibs_popiniparser *parser,const char *str,const unsigned strlen,poplibs_popinitoken_t *tokens,const unsigned tokenlen,unsigned *made,int dirM){
+	char chr= '\0';
+	char tmp;
+	char tmpt[]= {'t','r','u','e'};
+	char tmpf[]= {'f','a','l','s','e'};
+	int i= 0;
+	unsigned start;
+	unsigned lMade= 0;
+	int mTok= 0;
+	int isN= 0;
+	int hDot= 0;
+	poplibs_popinitoken_t *token;
+	
+	chr= popini_skipspace(parser,str,strlen);
+	start= parser->pos;
+	switch(chr){
+		case '\'':
+		case '"':
+			tmp= chr;
+			parser->pos++;
+			for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+				switch(chr){
+					case '\'':
+					case '"':
+						if(chr==tmp && !isN){
+							parser->pos++;
+							if(tokens!=NULL){
+								if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+									token->type= poplibs_popinitype_string;
+									token->start= start+1;
+									token->end= parser->pos-2;
+									mTok= 1;
+									(*made)++;
+								}else{
+									parser->err= poplibs_popinierror_nomem;
+									parser->errSym= '\0';
+									parser->errPos= parser->pos-1;
+									parser->pos= start;
+									mTok= 2;
+								}
+							}else{
+								(*made)++;
+								mTok= 1;
+							}
+						}
+						break;
+
+					case '\\':
+						isN= !isN;
+						break;
+
+					default:
+						isN= 0;
+						break;
+				}
+				if(mTok>0){
+					break;
+				}
+			}
+			if((chr=='\0' || parser->pos>=strlen) && mTok!=1){
+				parser->err= poplibs_popinierror_part;
+				parser->errPos= parser->pos-1;
+				parser->pos= start;
+				parser->errSym= tmp;
+			}
+			break;
+		
+		case '{':
+			if(tokens!=NULL){
+				if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+					token->type= poplibs_popinitype_table;
+					token->start= 0;
+					(*made)++;
+					mTok= 1;
+				}else{
+					parser->err= poplibs_popinierror_nomem;
+					parser->errSym= '\0';
+					parser->errPos= parser->pos;
+					parser->pos= start;
+					mTok= 2;
+				}
+			}else{
+				mTok= 1;
+				(*made)++;
+			}
+			if(mTok==1){
+				int cAdd= 1;
+				
+				parser->pos++;
+				mTok= 0;
+				for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+					switch(chr){
+						case ' ':
+						case '\f':
+						case '\v':
+						case '\t':
+						case '\r':
+							cAdd= 1;
+							break;
+						
+						case ';':
+						case '#':
+							parser->err= poplibs_popinierror_missi;
+							parser->errSym= '}';
+							parser->errPos= parser->pos-1;
+							parser->pos= start;
+							mTok= 2;
+							break;
+						
+						case '}':
+							parser->pos++;
+							if(token!=NULL){
+								token->end= lMade;
+							}
+							mTok= 1;
+							break;
+						
+						default:
+							if(cAdd){
+								popini_value(parser,str,strlen,tokens,tokenlen,made,1);
+								lMade++;
+								if(parser->err!=poplibs_popinierror_none){
+									mTok= 2;
+								}else{
+									parser->pos--;
+								}
+							}else{
+								parser->err= poplibs_popinierror_inval;
+								parser->errSym= '"';
+								parser->errPos= parser->pos;
+								parser->pos= start;
+								mTok= 2;
+							}
+							break;
+					}
+					if(mTok>0){
+						break;
+					}
+				}
+				if((chr=='\0' || parser->pos>=strlen) && mTok!=1){
+					parser->err= poplibs_popinierror_part;
+					parser->errPos= parser->pos-1;
+					parser->pos= start;
+					parser->errSym= '}';
+				}
+			}
+			break;
+		
+		case ';':
+		case '#':
+			parser->err= poplibs_popinierror_missi;
+			parser->errSym= '"';
+			parser->errPos= parser->pos;
+			parser->pos= start;
+			mTok= 2;
+			break;
+
+		default:
+			if(chr=='-' || chr=='.' || (chr>=48 && chr<=57)){
+				if(chr=='.'){
+					hDot= 1;
+				}
+				isN= 1;
+			}
+			if(chr=='t' || chr=='T'){
+				isN= 2;
+				i++;
+			}else if(chr=='f' || chr=='F'){
+				isN= 3;
+				i++;
+			}
+			parser->pos++;
+			for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+				switch(chr){
+					case ' ':
+					case '\r':
+					case '\t':
+					case '\v':
+					case '\f':
+					case ';':
+					case '#':
+					case '}':
+					case '\n':
+						if((!dirM || chr!='}') || (chr!=';' && chr!='#' && chr!='\n')){
+							enum poplibs_popinitype typ= poplibs_popinitype_string;
+							if(isN>0){
+								typ= poplibs_popinitype_primi;
+							}
+							if(tokens!=NULL){
+								if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+									token->type= typ;
+									token->start= start;
+									token->end= parser->pos-1;
+									mTok= 1;
+									(*made)++;
+								}else{
+									parser->err= poplibs_popinierror_nomem;
+									parser->errSym= '\0';
+									parser->errPos= parser->pos;
+									parser->pos= start;
+									mTok= 2;
+								}
+							}else{
+								(*made)++;
+								mTok= 1;
+							}
+						}else if(dirM){
+							parser->err= poplibs_popinierror_missi;
+							parser->errSym= '}';
+							parser->errPos= parser->pos;
+							parser->pos= start;
+							mTok= 2;
+						}
+						break;
+					
+					default:
+						if(isN==1 && (((chr=='.' && hDot) || chr!='.') && (chr<48 || chr>57))){
+							isN= 0;
+						}else if(isN==1 && chr=='.'){
+							hDot= 1;
+						}else if(isN==2 || isN==3){
+							if(isN==2){
+								if(chr!=tmpt[i] && chr!=(tmpt[i]-32)){
+									isN= 0;
+								}
+								if(i<3){
+									i++;
+								}
+							}else{
+								if(chr!=tmpf[i] && chr!=(tmpf[i]-32)){
+									isN= 0;
+								}
+								if(i<4){
+									i++;
+								}
+							}
+						}
+						break;
+				}
+				if(mTok>0){
+					break;
+				}
+			}
+			if((chr=='\0' || parser->pos>=strlen) && mTok!=1){
+				parser->err= poplibs_popinierror_part;
+				parser->errPos= parser->pos-1;
+				parser->pos= start;
+				parser->errSym= '\n';
+			}
+			break;
+	}
+
+	return;
+}
+
+static void popini_keyvalpair(poplibs_popiniparser *parser,const char *str,const unsigned strlen,poplibs_popinitoken_t *tokens,const unsigned tokenlen,unsigned *made){
+	char chr= '\0';
+	unsigned start= parser->pos;
+	unsigned end;
+	int mTok= 0;
+	int skptoeql= 0;
+	unsigned lMade= 0;
+	poplibs_popinitoken_t *token;
+
+	for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+		switch(chr){
+			case ' ':
+			case '\t':
+			case '\v':
+			case '\f':
+			case '\r':
+				if(!skptoeql){
+					end= parser->pos-1;
+					skptoeql= 1;
+				}
+				break;
+			
+			case '=':
+				if(!skptoeql){
+					end= parser->pos-1;
+				}
+				if(tokens!=NULL){
+					if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+						token->type= poplibs_popinitype_key;
+						token->start= start;
+						token->end= end;
+						mTok= 1;
+						lMade++;
+						parser->pos++;
+						popini_value(parser,str,strlen,tokens,tokenlen,&lMade,0);
+					}else{
+						parser->err= poplibs_popinierror_nomem;
+						parser->errSym= '\0';
+						parser->errPos= parser->pos;
+						parser->pos= start;
+					}
+				}else{
+					mTok= 1;
+					lMade++;
+					parser->pos++;
+					popini_value(parser,str,strlen,tokens,tokenlen,&lMade,0);
+				}
+				if(parser->err!=poplibs_popinierror_none){
+					parser->nexttok-= lMade;
+					parser->pos= start;
+					mTok= 2;
+				}else{
+					(*made)+= lMade;
+				}
+				break;
+			
+			case '\n':
+				parser->err= poplibs_popinierror_missi;
+				parser->errSym= '=';
+				parser->errPos= parser->pos-1;
+				parser->pos= start;
+				mTok= 2;
+				break;
+			
+			default:
+				if(skptoeql){
+					parser->err= poplibs_popinierror_inval;
+					parser->errSym= '=';
+					parser->errPos= parser->pos;
+					parser->pos= start;
+					mTok= 2;
+				}
+				break;
+		}
+		if(mTok>0){
+			break;
+		}
+	}
+	if((chr=='\0' || parser->pos>=strlen) && mTok!=1){
+		parser->err= poplibs_popinierror_part;
+		parser->errPos= parser->pos-1;
+		parser->pos= start;
+		parser->errSym= '=';
+	}
+	return;
+}
+
+static void popini_section(poplibs_popiniparser *parser,const char *str,const unsigned strlen,poplibs_popinitoken_t *tokens,const unsigned tokenlen,unsigned *made){
+	char chr= '\0';
+	unsigned start= parser->pos;
+	int mTok= 0;
+	int backslashed= 0;
+	poplibs_popinitoken_t *token;
+
+	for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+		switch(chr){
+			case ']':
+				if(!backslashed){
+					if(tokens!=NULL){
+						if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+							token->type= poplibs_popinitype_section;
+							token->start= start+1;
+							token->end= parser->pos-1;
+							mTok= 1;
+							(*made)++;
+						}
+					}else{
+						mTok= 1;
+						(*made)++;
+					}
+				}
+				break;
+			
+			case '\\':
+				backslashed= !backslashed;
+				break;
+			
+			case '\n':
+				parser->err= poplibs_popinierror_missi;
+				parser->errSym= ']';
+				parser->errPos= parser->pos-1;
+				parser->pos= start;
+				mTok= 2;
+				break;
+			
+			default:
+				backslashed= 0;
+				break;
+		}
+		if(mTok>0){
+			break;
+		}
+	}
+	if((chr=='\0' || parser->pos>=strlen) && mTok!=1){
+		parser->err= poplibs_popinierror_part;
+		parser->errPos= parser->pos-1;
+		parser->pos= start;
+		parser->errSym= ']';
+	}
+	return;	
+}
+
+POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *parser,const char *str,const unsigned strlen,poplibs_popinitoken_t *tokens,const unsigned tokenlen){
+	char chr= '\0';
+	unsigned start= parser->pos;
+	unsigned made= 0;
+	int nline= 0;
+	int commed= 0;
+	parser->err= poplibs_popinierror_none;
+
+	for(;parser->pos<=strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+		switch(chr){
+			case '#':
+			case ';':
+				nline= 1;
+				commed= 1;
+				break;
+			
+			case '\n':
+				nline= 0;
+				break;
+			
+			case '[':
+				popini_section(parser,str,strlen,tokens,tokenlen,&made);
+				start= parser->pos;
+				nline= 1;
+				break;
+			
+			case ' ':
+			case '\t':
+			case '\f':
+			case '\v':
+			case '\r':
+				break;
+			
+			default:
+				if(nline && !commed){
+					parser->err= poplibs_popinierror_inval;
+					parser->errPos= parser->pos;
+					parser->pos= start;
+					parser->errSym= ';';
+				}else if(!nline){
+					popini_keyvalpair(parser,str,strlen,tokens,tokenlen,&made);
+					start= parser->pos;
+					if((chr= str[parser->pos])!='\n'){
+						nline= 1;
+					}
+				}
+				break;
+		}
+		if(parser->err!=poplibs_popinierror_none){
+			break;
+		}
+	}
+	return made;
+}
+
+POPLIBS_POPINIAPI void poplibs_popiniparser_init(poplibs_popiniparser *parser){
+	parser->err= poplibs_popinierror_none;
+	parser->errPos= 0;
+	parser->nexttok= 0;
+	parser->pos= 0;
+	parser->errSym= '\0';
+	return;
+}
+
+#	endif
+
+#endif
+
 /*
 MIT License
 
@@ -21,101 +569,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#ifndef H_FILE_POPINI
-#define H_FILE_POPINI
-
-/* The structure that holds data of comments. Which contain the line (only used on newline comments), the comment str and the comment's dilema (that specify the char that occurs before the comment's str) */
-typedef struct{
-	char dilema;
-	long unsigned line;
-	char *str;
-} POPINI_ST_COMMENT;
-
-/* The structure that holds data of keys. Which contain the key string, the 2D array of values, one holding the value position, and the holding the actual value string. a comment structure, which contains the keys comment, and the valLen which is how many values this key has. */
-typedef struct{
-	char *key;
-	char **values;
-	POPINI_ST_COMMENT *comment;
-	long unsigned valLen;
-} POPINI_ST_KEY;
-
-/* The structure that holds data of sections. Which contain it's name, an array of key structures, a comment structure, and the number of keys inside of the section. */
-typedef struct{
-	char *name;
-	POPINI_ST_KEY **keys;
-	POPINI_ST_COMMENT *comment;
-	long unsigned keyLen;
-} POPINI_ST_SECTION;
-
-/* The structure that holds data of the parsed inifile. Which contain the file string, an array of unsectioned keys (placed at the top of the file, before any section identifiers), an array of section structures, an array of comment structures (for newline comments), a number that holds how many newline comments are stored, a number that holds how many sections are stored, and a number for how many unsectioned keys are stored. */
-typedef struct{
-	char *file;
-	POPINI_ST_KEY **keys;
-	POPINI_ST_SECTION **sections;
-	POPINI_ST_COMMENT **comments;
-	long unsigned comLen;
-	long unsigned secLen;
-	long unsigned keyLen;
-} POPINI_ST_INIFILE;
-
-/* Creates an inifile structure, then reads and parses the file `file` if it exists. */
-POPINI_ST_INIFILE *POPINI_FU_PARSE_INIFILE(const char *file);
-/* Creates an inifile structure, does not read and parse the file `file`. */
-POPINI_ST_INIFILE *POPINI_FU_NEW_INIFILE(const char *file);
-/* Writes the inifile structure to an inifile */
-void POPINI_FU_WRITE_INIFILE(POPINI_ST_INIFILE *ini);
-/* Frees all the memory used by the inifile structure */
-void POPINI_FU_FREE_INIFILE(POPINI_ST_INIFILE *ini);
-/* Retrieves a section by its name, because you can have sections with similar names, a skip is also passed, which specifies how many sections of the same name to skip, before returning the section. */
-POPINI_ST_SECTION *POPINI_FU_SECTION_FROM_NAME(POPINI_ST_INIFILE *ini,char *name,long unsigned skip);
-/* Retrieves a section by its position inside of the inifile structure. */
-POPINI_ST_SECTION *POPINI_FU_SECTION_FROM_POSITION(POPINI_ST_INIFILE *ini,long unsigned pos);
-
-/* Creates a new section inside of the inifile structure. */
-POPINI_ST_SECTION *POPINI_FU_NEW_SECTION(POPINI_ST_INIFILE *ini,char *name,long unsigned pos);
-/* Creates a key that is placed at the top of the inifile structure, this key has no section */
-POPINI_ST_KEY *POPINI_FU_NEW_UNSECTIONED_KEY(POPINI_ST_INIFILE *ini,char *key,long unsigned pos);
-
-/* Creates a key that is placed inside of the passed section. */
-POPINI_ST_KEY *POPINI_FU_NEW_KEY(POPINI_ST_SECTION *section,char *key,long unsigned pos);
-/* Creates a value string that is placed inside of the passed key. */
-void POPINI_FU_NEW_VALUE(POPINI_ST_KEY *key,char *value,long unsigned pos);
-
-/* Sets a keys comment to the passed string, afterwards you can set the comment dilema char. */
-POPINI_ST_COMMENT *POPINI_FU_SET_KEY_COMMENT(POPINI_ST_KEY *key,char *comm);
-/* Sets a sections comment to the passed string, afterwards you can set the comment dilema char. */
-POPINI_ST_COMMENT *POPINI_FU_SET_SECTION_COMMENT(POPINI_ST_SECTION *section,char *comm);
-
-/* Creates a new `newline` comment inside of the inifile structure, at the `pos`, keep in mind, all positional items are `maxxed`, so if you do -1 you will select the last position. */
-POPINI_ST_COMMENT *POPINI_FU_NEW_NEWLINE_COMMENT(POPINI_ST_INIFILE *ini,char *comm,long unsigned pos);
-
-/* Retrieves a key by its position inside of a section. */
-POPINI_ST_KEY *POPINI_FU_SECTIONED_KEY_FROM_POSITION(POPINI_ST_SECTION *sec,long unsigned pos);
-/* Retrieves a key by its key name inside of a section, because you can have keys with similar names, a skip is also passed, which specifies how many keys of the same name to skip, before returning the key. */
-POPINI_ST_KEY *POPINI_FU_SECTIONED_KEY_FROM_KEYNAME(POPINI_ST_SECTION *sec,char *key,long unsigned skip);
-
-/* Retrieves an unsectioned key by its position inside of an inifile */
-POPINI_ST_KEY *POPINI_FU_UNSECTIONED_KEY_FROM_POSITION(POPINI_ST_INIFILE *ini,long unsigned pos);
-/* Retrieves an unsectioned key by its key name inside of an inifile, because you can have keys with similar names, a skip is also passed, which specifies how many keys of the same name to skip, before returning the key. */
-POPINI_ST_KEY *POPINI_FU_UNSECTIONED_KEY_FROM_KEYNAME(POPINI_ST_INIFILE *ini,char *key,long unsigned skip);
-
-/* Removes an unsectioned key from the inifile, at the position pos */
-void POPINI_FU_REMOVE_UNSECTIONED_KEY_POSITION(POPINI_ST_INIFILE *ini,long unsigned pos);
-/* Removes a sectioned key from the inifile at the position pos */
-void POPINI_FU_REMOVE_SECTIONED_KEY_POSITION(POPINI_ST_SECTION *section,long unsigned pos);
-
-/* Removes a newline comment at the position pos */
-void POPINI_FU_REMOVE_NEWLINE_COMMENT_POSITION(POPINI_ST_INIFILE *ini,long unsigned pos);
-/* Unsets a section's comment. */
-void POPINI_FU_UNSET_SECTION_COMMENT(POPINI_ST_SECTION *sec);
-/* Unsets a key's comment. */
-void POPINI_FU_UNSET_KEY_COMMENT(POPINI_ST_KEY *key);
-
-/* Removes an unsectioned key from the inifile, instead of passing a number, you pass the pointer to the key. This function will loop through the inifile unsectioned keys until it finds the position of this pointer in the array, then just call the function `POPINI_FU_REMOVE_UNSECTIONED_KEY_POSITION` and pass the position it found. */
-void POPINI_FU_REMOVE_UNSECTIONED_KEY(POPINI_ST_INIFILE *ini,POPINI_ST_KEY *key);
-/* Removes a newline commeny from the inifile, instead of passing a number, you pass a pointer to the comment structure. This function will loop through all of the inifile newline comments until it find the position this pointer is in the array, then just calls the function `POPINI_FU_REMOVE_NEWLINE_COMMENT_POSITION` and pass the position it was found. */
-void POPINI_FU_REMOVE_NEWLINE_COMMENT(POPINI_ST_INIFILE *ini,POPINI_ST_COMMENT *comm);
-/* Removes a sectioned key from the section, instead of passing a number, you pass the pointer to the key. This function will loop through the inifile unsectioned keys until it finds the position of this pointer in the array, then just call the function `POPINI_FU_REMOVE_SECTIONED_KEY_POSITION` and pass the position it found. */
-void POPINI_FU_REMOVE_SECTIONED_KEY(POPINI_ST_SECTION *sec,POPINI_ST_KEY *key);
-
-#endif
