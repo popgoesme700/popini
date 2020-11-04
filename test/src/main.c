@@ -19,7 +19,7 @@ static char *substr(const char *str,const unsigned start,const unsigned end){
 }
 
 int main(int argc,const char *argv[]){
-	const char ini[]= "[Test]\n\tKey = True\n";
+	const char ini[]= "[Test]\nKey = True\nKey = \"Value is in here\"\nKey = {'Really. cool' 50 false}\nTblTest =   {Nope 50 60 193.023 -65 true false {table 'Is this really a table?' nope 5410 -51230 -539.532 .43243 TRUE FALSE}}";
 
 	poplibs_popiniparser parser;
 	poplibs_popinitoken_t tokens[64];
@@ -43,6 +43,8 @@ int main(int argc,const char *argv[]){
 				free(sub);
 			}
 		}
+	}else{
+		printf("Error? %c\n",ini[parser.errPos]);
 	}
 	return 0;
 }

@@ -191,6 +191,7 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 							break;
 						
 						case '}':
+							parser->pos++;
 							if(token!=NULL){
 								token->end= lMade;
 							}
@@ -199,11 +200,12 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 						
 						default:
 							if(cAdd){
-								cAdd= 0;
 								popini_value(parser,str,strlen,tokens,tokenlen,made,1);
 								lMade++;
 								if(parser->err!=poplibs_popinierror_none){
 									mTok= 2;
+								}else{
+									parser->pos--;
 								}
 							}else{
 								parser->err= poplibs_popinierror_inval;
@@ -262,7 +264,6 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 					case '#':
 					case '}':
 					case '\n':
-						parser->pos--;
 						if((!dirM || chr!='}') || (chr!=';' && chr!='#' && chr!='\n')){
 							enum poplibs_popinitype typ= poplibs_popinitype_string;
 							if(isN>0){
@@ -272,7 +273,7 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 								if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
 									token->type= typ;
 									token->start= start;
-									token->end= parser->pos;
+									token->end= parser->pos-1;
 									mTok= 1;
 									(*made)++;
 								}else{
@@ -302,14 +303,14 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 							hDot= 1;
 						}else if(isN==2 || isN==3){
 							if(isN==2){
-								if(chr!=tmpt[i] && chr!=(tmpt[i]+32)){
+								if(chr!=tmpt[i] && chr!=(tmpt[i]-32)){
 									isN= 0;
 								}
 								if(i<3){
 									i++;
 								}
 							}else{
-								if(chr!=tmpf[i] && chr!=(tmpf[i]+32)){
+								if(chr!=tmpf[i] && chr!=(tmpf[i]-32)){
 									isN= 0;
 								}
 								if(i<4){
@@ -519,7 +520,9 @@ POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *pars
 				}else if(!nline){
 					popini_keyvalpair(parser,str,strlen,tokens,tokenlen,&made);
 					start= parser->pos;
-					nline= 1;
+					if((chr= str[parser->pos])!='\n'){
+						nline= 1;
+					}
 				}
 				break;
 		}
