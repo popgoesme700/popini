@@ -1,4 +1,3 @@
-#define POPLIBS_POPINI_STRICT
 #include <popini.h>
 
 #include <string.h>
