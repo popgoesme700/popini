@@ -19,7 +19,7 @@ static char *substr(const char *str,const unsigned start,const unsigned end){
 }
 
 int main(int argc,const char *argv[]){
-	const char ini[]= "[Test]\n\tKey = {This should not fail {This is a new table!}}\n";
+	const char ini[]= "[Test]\n\tKey = True\n";
 
 	poplibs_popiniparser parser;
 	poplibs_popinitoken_t tokens[64];
