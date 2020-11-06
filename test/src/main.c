@@ -18,7 +18,7 @@ static char *substr(const char *str,const unsigned start,const unsigned end){
 }
 
 int main(int argc,const char *argv[]){
-	const char ini[]= "[Test]\nKey = True\nKey = \"Value is in here\"\nKey = {'Really. cool' 50 false}\nTblTest =   {Nope 50 60 193.023 -65 true false {table 'Is this really a table?' nope 5410 -51230 -539.532 .43243 TRUE FALSE}}";
+	const char ini[]= "[Test]\nKey = Truee\nKey = \"Value is in here\"\nKey = {'Really. cool' 50 false}\nTblTest =   {Nope 50 60 193.023 -65 true false {table 'Is this really a table?' nope 5410 -51230 -539.532 .43243 TRUE FALSE}}";
 
 	poplibs_popiniparser parser;
 	poplibs_popinitoken_t tokens[64];

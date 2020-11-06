@@ -84,8 +84,8 @@ static char popini_skipspace(poplibs_popiniparser *parser,const char *str,const 
 static void popini_value(poplibs_popiniparser *parser,const char *str,const unsigned strlen,poplibs_popinitoken_t *tokens,const unsigned tokenlen,unsigned *made,int dirM){
 	char chr= '\0';
 	char tmp;
-	char tmpt[]= {'t','r','u','e'};
-	char tmpf[]= {'f','a','l','s','e'};
+	char tmpt[]= {'r','u','e','\0'};
+	char tmpf[]= {'a','l','s','e','\0'};
 	int i= 0;
 	unsigned start;
 	unsigned lMade= 0;
@@ -247,10 +247,8 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 			}
 			if(chr=='t' || chr=='T'){
 				isN= 2;
-				i++;
 			}else if(chr=='f' || chr=='F'){
 				isN= 3;
-				i++;
 			}
 			parser->pos++;
 			for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
