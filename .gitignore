@@ -1,9 +1,10 @@
 # Block IDE specific folders/files.
 .vscode/
 compile_commands.json
-.compilationjsons
+.compilationjsons/
 .cache/
 .clangd/
 
 # Block test unit build directory
 test/build/
+test/mk.sh

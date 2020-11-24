@@ -43,7 +43,7 @@ typedef struct poplibs_popinitoken{
 } poplibs_popinitoken_t;
 
 POPLIBS_POPINIAPI void poplibs_popiniparser_init(poplibs_popiniparser *parser);
-POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *parser,const char *str,const unsigned strlen,poplibs_popinitoken_t *tokens,const unsigned tokenlen);
+POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *parser,const char *str,const unsigned strsize,poplibs_popinitoken_t *tokens,const unsigned tokenlen);
 
 #	ifndef POPLIBS_POPINICOMPILED
 
@@ -58,11 +58,11 @@ static poplibs_popinitoken_t *popini_alloctoken(poplibs_popiniparser *parser,pop
 	return token;
 }
 
-static char popini_skipspace(poplibs_popiniparser *parser,const char *str,const unsigned strlen){
+static char popini_skipspace(poplibs_popiniparser *parser,const char *str,const unsigned strsize){
 	char chr= '\0';
 	int leav= 0;
 
-	for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+	for(;parser->pos<strsize && (chr= str[parser->pos])!='\0';parser->pos++){
 		switch(chr){
 			case ' ':
 			case '\t':
@@ -81,7 +81,7 @@ static char popini_skipspace(poplibs_popiniparser *parser,const char *str,const 
 	return chr;
 }
 
-static void popini_value(poplibs_popiniparser *parser,const char *str,const unsigned strlen,poplibs_popinitoken_t *tokens,const unsigned tokenlen,unsigned *made,int dirM){
+static void popini_value(poplibs_popiniparser *parser,const char *str,const unsigned strsize,poplibs_popinitoken_t *tokens,const unsigned tokenlen,unsigned *made,int dirM){
 	char chr= '\0';
 	char tmp;
 	char tmpt[]= {'r','u','e','\0'};
@@ -94,14 +94,14 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 	int hDot= 0;
 	poplibs_popinitoken_t *token;
 	
-	chr= popini_skipspace(parser,str,strlen);
+	chr= popini_skipspace(parser,str,strsize);
 	start= parser->pos;
 	switch(chr){
 		case '\'':
 		case '"':
 			tmp= chr;
 			parser->pos++;
-			for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+			for(;parser->pos<strsize && (chr= str[parser->pos])!='\0';parser->pos++){
 				switch(chr){
 					case '\'':
 					case '"':
@@ -140,7 +140,7 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 					break;
 				}
 			}
-			if((chr=='\0' || parser->pos>=strlen) && mTok!=1){
+			if((chr=='\0' || parser->pos>=strsize) && mTok!=1){
 				parser->err= poplibs_popinierror_part;
 				parser->errPos= parser->pos-1;
 				parser->pos= start;
@@ -171,7 +171,7 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 				
 				parser->pos++;
 				mTok= 0;
-				for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+				for(;parser->pos<strsize && (chr= str[parser->pos])!='\0';parser->pos++){
 					switch(chr){
 						case ' ':
 						case '\f':
@@ -200,7 +200,7 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 						
 						default:
 							if(cAdd){
-								popini_value(parser,str,strlen,tokens,tokenlen,made,1);
+								popini_value(parser,str,strsize,tokens,tokenlen,made,1);
 								lMade++;
 								if(parser->err!=poplibs_popinierror_none){
 									mTok= 2;
@@ -220,7 +220,7 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 						break;
 					}
 				}
-				if((chr=='\0' || parser->pos>=strlen) && mTok!=1){
+				if((chr=='\0' || parser->pos>=strsize) && mTok!=1){
 					parser->err= poplibs_popinierror_part;
 					parser->errPos= parser->pos-1;
 					parser->pos= start;
@@ -251,7 +251,7 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 				isN= 3;
 			}
 			parser->pos++;
-			for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+			for(;parser->pos<strsize && (chr= str[parser->pos])!='\0';parser->pos++){
 				switch(chr){
 					case ' ':
 					case '\r':
@@ -322,7 +322,7 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 					break;
 				}
 			}
-			if((chr=='\0' || parser->pos>=strlen) && mTok!=1){
+			if((chr=='\0' || parser->pos>=strsize) && mTok!=1){
 				parser->err= poplibs_popinierror_part;
 				parser->errPos= parser->pos-1;
 				parser->pos= start;
@@ -334,7 +334,7 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 	return;
 }
 
-static void popini_keyvalpair(poplibs_popiniparser *parser,const char *str,const unsigned strlen,poplibs_popinitoken_t *tokens,const unsigned tokenlen,unsigned *made){
+static void popini_keyvalpair(poplibs_popiniparser *parser,const char *str,const unsigned strsize,poplibs_popinitoken_t *tokens,const unsigned tokenlen,unsigned *made){
 	char chr= '\0';
 	unsigned start= parser->pos;
 	unsigned end;
@@ -343,7 +343,7 @@ static void popini_keyvalpair(poplibs_popiniparser *parser,const char *str,const
 	unsigned lMade= 0;
 	poplibs_popinitoken_t *token;
 
-	for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+	for(;parser->pos<strsize && (chr= str[parser->pos])!='\0';parser->pos++){
 		switch(chr){
 			case ' ':
 			case '\t':
@@ -368,7 +368,7 @@ static void popini_keyvalpair(poplibs_popiniparser *parser,const char *str,const
 						mTok= 1;
 						lMade++;
 						parser->pos++;
-						popini_value(parser,str,strlen,tokens,tokenlen,&lMade,0);
+						popini_value(parser,str,strsize,tokens,tokenlen,&lMade,0);
 					}else{
 						parser->err= poplibs_popinierror_nomem;
 						parser->errSym= '\0';
@@ -379,7 +379,7 @@ static void popini_keyvalpair(poplibs_popiniparser *parser,const char *str,const
 					mTok= 1;
 					lMade++;
 					parser->pos++;
-					popini_value(parser,str,strlen,tokens,tokenlen,&lMade,0);
+					popini_value(parser,str,strsize,tokens,tokenlen,&lMade,0);
 				}
 				if(parser->err!=poplibs_popinierror_none){
 					parser->nexttok-= lMade;
@@ -412,7 +412,7 @@ static void popini_keyvalpair(poplibs_popiniparser *parser,const char *str,const
 			break;
 		}
 	}
-	if((chr=='\0' || parser->pos>=strlen) && mTok!=1){
+	if((chr=='\0' || parser->pos>=strsize) && mTok!=1){
 		parser->err= poplibs_popinierror_part;
 		parser->errPos= parser->pos-1;
 		parser->pos= start;
@@ -421,14 +421,14 @@ static void popini_keyvalpair(poplibs_popiniparser *parser,const char *str,const
 	return;
 }
 
-static void popini_section(poplibs_popiniparser *parser,const char *str,const unsigned strlen,poplibs_popinitoken_t *tokens,const unsigned tokenlen,unsigned *made){
+static void popini_section(poplibs_popiniparser *parser,const char *str,const unsigned strsize,poplibs_popinitoken_t *tokens,const unsigned tokenlen,unsigned *made){
 	char chr= '\0';
 	unsigned start= parser->pos;
 	int mTok= 0;
 	int backslashed= 0;
 	poplibs_popinitoken_t *token;
 
-	for(;parser->pos<strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+	for(;parser->pos<strsize && (chr= str[parser->pos])!='\0';parser->pos++){
 		switch(chr){
 			case ']':
 				if(!backslashed){
@@ -467,7 +467,7 @@ static void popini_section(poplibs_popiniparser *parser,const char *str,const un
 			break;
 		}
 	}
-	if((chr=='\0' || parser->pos>=strlen) && mTok!=1){
+	if((chr=='\0' || parser->pos>=strsize) && mTok!=1){
 		parser->err= poplibs_popinierror_part;
 		parser->errPos= parser->pos-1;
 		parser->pos= start;
@@ -476,7 +476,7 @@ static void popini_section(poplibs_popiniparser *parser,const char *str,const un
 	return;	
 }
 
-POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *parser,const char *str,const unsigned strlen,poplibs_popinitoken_t *tokens,const unsigned tokenlen){
+POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *parser,const char *str,const unsigned strsize,poplibs_popinitoken_t *tokens,const unsigned tokenlen){
 	char chr= '\0';
 	unsigned start= parser->pos;
 	unsigned made= 0;
@@ -484,7 +484,7 @@ POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *pars
 	int commed= 0;
 	parser->err= poplibs_popinierror_none;
 
-	for(;parser->pos<=strlen && (chr= str[parser->pos])!='\0';parser->pos++){
+	for(;parser->pos<=strsize && (chr= str[parser->pos])!='\0';parser->pos++){
 		switch(chr){
 			case '#':
 			case ';':
@@ -497,7 +497,7 @@ POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *pars
 				break;
 			
 			case '[':
-				popini_section(parser,str,strlen,tokens,tokenlen,&made);
+				popini_section(parser,str,strsize,tokens,tokenlen,&made);
 				start= parser->pos;
 				nline= 1;
 				break;
@@ -516,7 +516,7 @@ POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *pars
 					parser->pos= start;
 					parser->errSym= ';';
 				}else if(!nline){
-					popini_keyvalpair(parser,str,strlen,tokens,tokenlen,&made);
+					popini_keyvalpair(parser,str,strsize,tokens,tokenlen,&made);
 					start= parser->pos;
 					if((chr= str[parser->pos])!='\n'){
 						nline= 1;
