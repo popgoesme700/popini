@@ -262,7 +262,7 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 					case '#':
 					case '}':
 					case '\n':
-						if((!dirM || chr!='}') || (chr!=';' && chr!='#' && chr!='\n')){
+						if((!dirM || chr!='}') || (chr!=';' && chr!='#' && chr!='\n' && chr!='\0')){
 							enum poplibs_popinitype typ= poplibs_popinitype_string;
 							if(isN>0){
 								typ= poplibs_popinitype_primi;
@@ -323,10 +323,36 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 				}
 			}
 			if((chr=='\0' || parser->pos>=strsize) && mTok!=1){
-				parser->err= poplibs_popinierror_part;
-				parser->errPos= parser->pos-1;
-				parser->pos= start;
-				parser->errSym= '\n';
+				if((!dirM || chr!='}') || (chr!=';' && chr!='#' && chr!='\n' && chr!='\0')){
+					enum poplibs_popinitype typ= poplibs_popinitype_string;
+					if(isN>0){
+						typ= poplibs_popinitype_primi;
+					}
+					if(tokens!=NULL){
+						if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+							token->type= typ;
+							token->start= start;
+							token->end= parser->pos-1;
+							mTok= 1;
+							(*made)++;
+						}else{
+							parser->err= poplibs_popinierror_nomem;
+							parser->errSym= '\0';
+							parser->errPos= parser->pos;
+							parser->pos= start;
+							mTok= 2;
+						}
+					}else{
+						(*made)++;
+						mTok= 1;
+					}
+				}else if(dirM){
+					parser->err= poplibs_popinierror_missi;
+					parser->errSym= '}';
+					parser->errPos= parser->pos;
+					parser->pos= start;
+					mTok= 2;
+				}
 			}
 			break;
 	}
