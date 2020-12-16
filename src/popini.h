@@ -7,8 +7,10 @@
 #		define POPLIBS_POPINIAPI extern
 #	endif
 
-#	ifndef NULL
-#		define NULL (void*)0
+#	ifdef NULL
+#		define POPLIBS_POPININULL NULL
+#	else
+#		define POPLIBS_POPININULL (void*)0
 #	endif
 
 enum poplibs_popinierror{
@@ -48,7 +50,7 @@ POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *pars
 #	ifndef POPLIBS_POPINICOMPILED
 
 static poplibs_popinitoken_t *popini_alloctoken(poplibs_popiniparser *parser,poplibs_popinitoken_t *tokens,const unsigned tokenlen){
-	poplibs_popinitoken_t *token= NULL;
+	poplibs_popinitoken_t *token= POPLIBS_POPININULL;
 	if(parser->nexttok<tokenlen){
 		token= &tokens[parser->nexttok++];
 		token->type= poplibs_popinitype_unknown;
@@ -107,8 +109,8 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 					case '"':
 						if(chr==tmp && !isN){
 							parser->pos++;
-							if(tokens!=NULL){
-								if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+							if(tokens!=POPLIBS_POPININULL){
+								if((token= popini_alloctoken(parser,tokens,tokenlen))!=POPLIBS_POPININULL){
 									token->type= poplibs_popinitype_string;
 									token->start= start+1;
 									token->end= parser->pos-2;
@@ -149,8 +151,8 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 			break;
 		
 		case '{':
-			if(tokens!=NULL){
-				if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+			if(tokens!=POPLIBS_POPININULL){
+				if((token= popini_alloctoken(parser,tokens,tokenlen))!=POPLIBS_POPININULL){
 					token->type= poplibs_popinitype_table;
 					token->start= 0;
 					(*made)++;
@@ -192,7 +194,7 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 						
 						case '}':
 							parser->pos++;
-							if(token!=NULL){
+							if(token!=POPLIBS_POPININULL){
 								token->end= lMade;
 							}
 							mTok= 1;
@@ -267,8 +269,8 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 							if(isN>0){
 								typ= poplibs_popinitype_primi;
 							}
-							if(tokens!=NULL){
-								if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+							if(tokens!=POPLIBS_POPININULL){
+								if((token= popini_alloctoken(parser,tokens,tokenlen))!=POPLIBS_POPININULL){
 									token->type= typ;
 									token->start= start;
 									token->end= parser->pos-1;
@@ -328,8 +330,8 @@ static void popini_value(poplibs_popiniparser *parser,const char *str,const unsi
 					if(isN>0){
 						typ= poplibs_popinitype_primi;
 					}
-					if(tokens!=NULL){
-						if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+					if(tokens!=POPLIBS_POPININULL){
+						if((token= popini_alloctoken(parser,tokens,tokenlen))!=POPLIBS_POPININULL){
 							token->type= typ;
 							token->start= start;
 							token->end= parser->pos-1;
@@ -386,8 +388,8 @@ static void popini_keyvalpair(poplibs_popiniparser *parser,const char *str,const
 				if(!skptoeql){
 					end= parser->pos-1;
 				}
-				if(tokens!=NULL){
-					if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+				if(tokens!=POPLIBS_POPININULL){
+					if((token= popini_alloctoken(parser,tokens,tokenlen))!=POPLIBS_POPININULL){
 						token->type= poplibs_popinitype_key;
 						token->start= start;
 						token->end= end;
@@ -458,8 +460,8 @@ static void popini_section(poplibs_popiniparser *parser,const char *str,const un
 		switch(chr){
 			case ']':
 				if(!backslashed){
-					if(tokens!=NULL){
-						if((token= popini_alloctoken(parser,tokens,tokenlen))!=NULL){
+					if(tokens!=POPLIBS_POPININULL){
+						if((token= popini_alloctoken(parser,tokens,tokenlen))!=POPLIBS_POPININULL){
 							token->type= poplibs_popinitype_section;
 							token->start= start+1;
 							token->end= parser->pos-1;
