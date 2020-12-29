@@ -512,7 +512,7 @@ POPLIBS_POPINIAPI unsigned poplibs_popiniparser_parse(poplibs_popiniparser *pars
 	int commed= 0;
 	parser->err= poplibs_popinierror_none;
 
-	for(;parser->pos<=strsize && (chr= str[parser->pos])!='\0';parser->pos++){
+	for(;parser->pos<strsize && (chr= str[parser->pos])!='\0';parser->pos++){
 		switch(chr){
 			case '#':
 			case ';':
