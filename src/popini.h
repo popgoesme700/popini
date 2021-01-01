@@ -575,7 +575,7 @@ POPLIBS_POPINIAPI void poplibs_popiniparser_init(poplibs_popiniparser *parser){
 /*
 MIT License
 
-Copyright (c) 2020 Azrael James Addy
+Copyright (c) 2021 Azrael James Addy
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
